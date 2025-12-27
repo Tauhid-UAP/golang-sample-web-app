@@ -1,0 +1,39 @@
+{{define "content"}}
+<h2>Your Profile</h2>
+
+<p><strong>Email:</strong> {{.User.Email}}</p>
+
+<p><strong>Name:</strong> {{.User.FirstName}} {{.User.LastName}}</p>
+
+{{if .User.ProfileImage}}
+    <img src="/{{.User.ProfileImage}}" width="150" style="border-radius: 8px;">
+{{else}}
+    <p><em>No profile picture uploaded</em></p>
+{{end}}
+
+<hr>
+
+<h3>Update Profile</h3>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="CSRFToken" value="{{.CSRF}}">
+    <label>First Name</label><br>
+    <input name="FirstName" value="{{.User.FirstName}}"><br><br>
+
+    <label>Last Name</label><br>
+    <input name="LastName" value="{{.User.LastName}}"><br><br>
+
+    <label>Profile Picture</label><br>
+    <input type="file" name="ProfileImage"><br><br>
+
+    <button type="submit">Update Profile</button>
+</form>
+
+<hr>
+
+<form method="POST" action="/logout">
+    <input type="hidden" name="CSRFToken" value="{{.CSRF}}">
+    <button type="submit">Logout</button>
+</form>
+{{end}}
+
