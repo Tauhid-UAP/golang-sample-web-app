@@ -28,6 +28,7 @@ services:
       - db
       - redis
     volumes:
+      - ~/.aws:/root/.aws:ro
       - ./media/uploads:/app/media/uploads
     restart: unless-stopped
 

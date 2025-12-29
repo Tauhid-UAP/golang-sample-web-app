@@ -16,11 +16,13 @@ import (
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/store"
 
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/redisclient"
+
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/awsclient"
 )
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Printf("Error loading .env file: %v\n", err)
+		log.Printf(".env file not found: %v\n", err)
 	}
 	
 	DATABASE_URL := os.Getenv("DATABASE_URL")
@@ -36,6 +38,8 @@ func main() {
 	if err := redisclient.Ping(context.Background()); err != nil {
 		log.Fatal(err)
 	}
+
+	awsclient.Init()
 
 	mux := http.NewServeMux()
 

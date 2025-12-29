@@ -1,14 +1,16 @@
 package handlers
 
 import (
-	"io"
+	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"log"
+	"time"
 
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/middleware"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/store"
+
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/awsclient"
 )
 
 func Profile(w http.ResponseWriter, r *http.Request) {
@@ -28,12 +30,23 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 		}
 
 		defer file.Close()
+		
+		path, err := awsclient.Service.UploadFile(r.Context(), fmt.Sprintf("golang-sample-web-profile-images/%s_%d%s", userID, time.Now().Unix(), filepath.Ext(header.Filename)), file, header.Header.Get("Content-Type"))
+		if err != nil {
+			log.Fatal(err)
+			http.Redirect(w, r, "/profile", http.StatusSeeOther)
+			return
+		}
+
+		/*
 		path := filepath.Join("media/uploads", userID+"_"+header.Filename)
 		destination, _ := os.Create(path)
 		defer destination.Close()
 
 		io.Copy(destination, file)
-		user.ProfileImage = &path		
+		*/
+
+		user.ProfileImage = &path
 
 		store.UpdateUser(r.Context(), user)
 		http.Redirect(w, r, "/profile", http.StatusSeeOther)

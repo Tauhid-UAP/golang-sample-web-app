@@ -6,7 +6,7 @@
 <p><strong>Name:</strong> {{.User.FirstName}} {{.User.LastName}}</p>
 
 {{if .User.ProfileImage}}
-    <img src="/{{.User.ProfileImage}}" width="150" style="border-radius: 8px;">
+    <img src="{{.User.ProfileImage}}" width="150" style="border-radius: 8px;">
 {{else}}
     <p><em>No profile picture uploaded</em></p>
 {{end}}
