@@ -10,14 +10,15 @@ import (
 	
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/gorilla/websocket"
 	
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/handlers"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/middleware"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/store"
-
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/redisclient"
-
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/awsclient"
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/websockethandlers"
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/chat"
 )
 
 func main() {
@@ -55,6 +56,13 @@ func main() {
 
 	protected.HandleFunc("/logout", handlers.Logout)
 	protected.HandleFunc("/profile", handlers.Profile)
+	protected.HandleFunc("/chat", handlers.Chat)
+
+	hub := chat.CreateHub()
+	websocketUpgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {return true},
+	}
+	protected.HandleFunc("/ws/chat", websockethandlers.ChatHandler(websocketUpgrader, hub))
 	
 	protectedHandler := middleware.AuthMiddleware(middleware.CSRFMiddleware(protected))
 
