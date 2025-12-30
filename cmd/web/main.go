@@ -19,6 +19,7 @@ import (
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/awsclient"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/websockethandlers"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/chat"
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/config"
 )
 
 func main() {
@@ -48,15 +49,19 @@ func main() {
 	mux.HandleFunc("/register", handlers.Register)
 	mux.HandleFunc("/login", handlers.Login)
 
-	// Static files
-	mux.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir("media"))))
+	cfg := config.Load()
+	
+	if cfg.Debug {
+		// Static files
+		mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	}
 	
 	// Protected routes
 	protected := http.NewServeMux()
 
 	protected.HandleFunc("/logout", handlers.Logout)
 	protected.HandleFunc("/profile", handlers.Profile)
-	protected.HandleFunc("/chat", handlers.Chat)
+	protected.HandleFunc("/chat", handlers.ChatPageHandler(cfg.StaticAssetBaseURL))
 
 	hub := chat.CreateHub()
 	websocketUpgrader := websocket.Upgrader{

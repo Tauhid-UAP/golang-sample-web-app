@@ -14,6 +14,7 @@ type PageData struct {
 	Title string
 	User models.User
 	CSRF string
+	StaticAssetBaseURL string
 }
 
 func Render(w http.ResponseWriter, page string, data PageData) {
