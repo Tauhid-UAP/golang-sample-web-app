@@ -4,12 +4,16 @@ import (
 	"context"
 	"net/http"
 	"log"
+	"fmt"
+	"time"
+	"encoding/json"
 
 	"github.com/gorilla/websocket"
 
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/chat"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/middleware"
 	"github.com/Tauhid-UAP/golang-sample-web-app/core/redisclient"
+	"github.com/Tauhid-UAP/golang-sample-web-app/core/store"
 )
 
 func ChatHandler(websocketUpgrader websocket.Upgrader, hub *chat.Hub) http.HandlerFunc {
@@ -26,6 +30,7 @@ func ChatHandler(websocketUpgrader websocket.Upgrader, hub *chat.Hub) http.Handl
 		}
 
 		userID := r.Context().Value(middleware.UserIDKey).(string)
+		
 		client := &chat.Client{
 			Conn: websocketConnection,
 			Receiver: make(chan []byte, 256),
@@ -38,6 +43,8 @@ func ChatHandler(websocketUpgrader websocket.Upgrader, hub *chat.Hub) http.Handl
 		room.Register <- client
 
 		go client.ReceiveMessages()
+		
+		user, _ := store.GetUserByID(ctx, userID)
 
 		for {
 			_, message, err := websocketConnection.ReadMessage()
@@ -47,9 +54,24 @@ func ChatHandler(websocketUpgrader websocket.Upgrader, hub *chat.Hub) http.Handl
 				break
 			}
 
-			payload := []byte(userID + ": " + string(message))
+			// payload := []byte(userID + ": " + string(message))
+			payload := chat.WebSocketMessage{
+				Type: chat.EventChatMessage,
+				Data: chat.ChatMessageData{
+					FullName: fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+					Message: string(message),
+					SentAt: time.Now().UTC(),
+				},
+			}
 			log.Printf("Publishing to room: %s", payload)
-			redisclient.PublishToRoom(ctx, roomName, payload)
+
+			payloadBytes, err := json.Marshal(payload)
+			if err != nil {
+				log.Printf("Error marshalling payload: %v", err)
+				continue
+			}
+
+			redisclient.PublishToRoom(ctx, roomName, payloadBytes)
 		}
 		
 		log.Printf("Unregistering client")

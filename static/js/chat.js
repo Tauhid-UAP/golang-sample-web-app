@@ -41,9 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
             setStatus("Connected");
         };
 
-        socket.onmessage = function (event) {
-            addMessage(event.data);
-        };
+        socket.onmessage = onMessage;
 
         socket.onerror = function () {
             setStatus("WebSocket error");
@@ -69,12 +67,67 @@ document.addEventListener("DOMContentLoaded", function () {
         messageInput.value = "";
     }
 
-    function addMessage(text) {
-        const div = document.createElement("div");
-        div.className = "message";
-        div.textContent = text;
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    function formatTime(isoString) {
+	const date = new Date(isoString);
+	return date.toLocaleTimeString([], {
+		hour: "2-digit",
+		minute: "2-digit"
+	});
+    }
+
+    function addMessage(fullName, message, sentAt) {
+	    const wrapper = document.createElement("div");
+	    wrapper.className = "message";
+
+	    const nameSpan = document.createElement("span");
+	    nameSpan.className = "user-full-name";
+	    nameSpan.textContent = fullName;
+
+	    const separatorSpan = document.createElement("span");
+	    separatorSpan.className = "message-separator";
+	    separatorSpan.textContent = ": ";
+
+	    const messageSpan = document.createElement("span");
+	    messageSpan.className = "message-text";
+	    messageSpan.textContent = message;
+
+	    const timeSpan = document.createElement("span");
+	    timeSpan.className = "message-time";
+	    timeSpan.textContent = formatTime(sentAt);
+
+	    wrapper.appendChild(nameSpan);
+	    wrapper.appendChild(separatorSpan);
+	    wrapper.appendChild(messageSpan);
+	    wrapper.appendChild(timeSpan);
+
+	    messagesDiv.appendChild(wrapper);
+	    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function renderSystemMessage(text) {
+	    const div = document.createElement("div");
+	    div.className = "system-message";
+	    div.textContent = text;
+	    messagesDiv.appendChild(div);
+    }
+
+    function onMessage(event) {
+	    const payload = JSON.parse(event.data);
+	    const payloadType = payload.Type;
+	    const data = payload.Data;
+	    switch (payloadType) {
+		    case "chat.message":
+			    addMessage(data.FullName, data.Message, data.SentAt);
+			    break;
+
+		    case "user.join":
+			    renderSystemMessage(`${data.FullName} joined`);
+			    break;
+
+		    case "user.leave":
+			    renderSystemMessage(`${data.FullName} left`);
+			    break;
+	    }
     }
 
     function setStatus(text) {
